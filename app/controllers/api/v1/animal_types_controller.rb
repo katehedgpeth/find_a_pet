@@ -1,18 +1,30 @@
 class Api::V1::AnimalTypesController < ApplicationController
   def index
-    render(json: get_type_names())
+    render(json: get_types())
   end
 
   # ------------------------------------------------------
   private
 
-  def get_type_names
+  def get_types
     PetfinderService.new()
       .call_api("animal_types")
-      .then { extract_type_names_from_response(_1) }
+      .fetch("types")
+      .map { transform_type_data(_1) }
   end
 
-  def extract_type_names_from_response(response)
-    response["types"].map { |type| type["name"] }
+  def transform_type_data(data_hash)
+    data_hash["slug"] = get_slug(data_hash)
+    data_hash.delete("_links")
+    return data_hash
+  end
+
+  def get_slug(data_hash)
+    data_hash
+      .fetch("_links")
+      .fetch("self")
+      .fetch("href")
+      .split("/")
+      .last()
   end
 end

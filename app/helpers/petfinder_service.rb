@@ -15,33 +15,51 @@ class PetfinderService
     "petfinder/bearer_token"
   end
 
-  def url(endpoint)
-    return "#{BASE_URL}/#{ENDPOINTS[endpoint]}"
+  def url(endpoint, resource = nil)
+    [BASE_URL, ENDPOINTS[endpoint], resource]
+      .reject { |part| part.nil? }
+      .join("/")
   end
 
-  def get_bearer_token(force: false, base_url: BASE_URL)
+  def params(endpoint)
+    @endpoint_params = {
+      "token" => {
+        :grant_type => "client_credentials",
+        :client_id => ENV["PETFINDER_API_KEY"],
+        :client_secret => ENV["PETFINDER_SECRET"]
+      }
+    }
+
+    @endpoint_params[endpoint]
+  end
+
+  def get_bearer_token()
     # TODO: cache
     # TODO: handle bad response
     url("token")
       .then { URI.parse(_1) }
-      .then { Net::HTTP.post_form(_1, {
-        :grant_type => "client_credentials",
-        :client_id => ENV["PETFINDER_API_KEY"],
-        :client_secret => ENV["PETFINDER_SECRET"]
-      })}
+      .then { Net::HTTP.post_form(_1, params("token"))}
       .then { JSON.parse(_1.body)["access_token"] }
   end
 
-  def call_api(endpoint, base_url: BASE_URL)
+  def call_api(endpoint, resource = nil, params = {})
     # TODO: cache
     # TODO: handle bad response
-    token = get_bearer_token(base_url: base_url)
-
-    url(endpoint)
+    url(endpoint, resource)
       .then { URI.parse(_1) }
-      .then { Net::HTTP.get(_1, headers={
-        "Authorization" => "Bearer #{token}"
-      }) }
+      .then { add_params(_1, params) }
+      .then { Net::HTTP.get(_1, headers=headers())}
       .then { JSON.parse(_1) }
+  end
+
+  private
+
+  def headers
+    { "Authorization" => "Bearer #{get_bearer_token()}" }
+  end
+
+  def add_params(uri, params)
+    uri.query = URI.encode_www_form(params) unless params.empty?
+    return uri
   end
 end

@@ -4,6 +4,7 @@ interface Props {
   isSelected: boolean;
   name: string;
   setSelected: Dispatch<SetStateAction<string>>
+  slug: string;
 
 }
 
@@ -12,10 +13,10 @@ const className = (isSelected: boolean): string[] => {
   return isSelected ? ["btn-primary", ...always] : always
 }
 
-const AnimalTypeButton: FC<Props> = ({ name, setSelected, isSelected }) => (
+const AnimalTypeButton: FC<Props> = ({ isSelected, name, setSelected, slug }) => (
   <button
     className={className(isSelected).join(" ")}
-    onClick={() => setSelected(name)}
+    onClick={() => setSelected(slug)}
   >
     {name}
   </button>
