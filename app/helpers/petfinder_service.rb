@@ -4,8 +4,6 @@ require "net/http"
 class PetfinderService
 
   BASE_URL = "https://api.petfinder.com/v2"
-  CLIENT_ID = ENV["PETFINDER_API_KEY"]
-  CLIENT_SECRET = ENV["PETFINDER_SECRET"]
 
   ENDPOINTS = {
     "token" => "oauth2/token",
@@ -24,12 +22,12 @@ class PetfinderService
   def get_bearer_token(force: false, base_url: BASE_URL)
     # TODO: cache
     # TODO: handle bad response
-    return url("token")
+    url("token")
       .then { URI.parse(_1) }
       .then { Net::HTTP.post_form(_1, {
         :grant_type => "client_credentials",
-        :client_id => CLIENT_ID,
-        :client_secret => CLIENT_SECRET
+        :client_id => ENV["PETFINDER_API_KEY"],
+        :client_secret => ENV["PETFINDER_SECRET"]
       })}
       .then { JSON.parse(_1.body)["access_token"] }
   end
@@ -39,7 +37,7 @@ class PetfinderService
     # TODO: handle bad response
     token = get_bearer_token(base_url: base_url)
 
-    return url(endpoint) 
+    url(endpoint)
       .then { URI.parse(_1) }
       .then { Net::HTTP.get(_1, headers={
         "Authorization" => "Bearer #{token}"

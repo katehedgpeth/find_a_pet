@@ -1,7 +1,12 @@
 import React from "react";
+import AnimalTypes from "./components/AnimalTypes";
+
+import "./styles.css"
 
 const App = () => {
-  return <div>Hello from the react app!</div>
+  return <div>
+    <AnimalTypes />
+  </div>
 }
 
 export default App;
